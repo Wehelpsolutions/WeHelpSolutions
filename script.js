@@ -1,7 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
 
 // Firebase configuration
@@ -84,7 +84,7 @@ if (window.location.pathname.endsWith("WeHelpSolutions/")) {
 // Show Password
 
 // Check if the current page is either index.html or register.html
-if (document.location.pathname === "/index.html" || document.location.pathname === "/register.html") {
+if (document.location.pathname === "WeHelpSolutions/" || document.location.pathname === "/register.html") {
     document.getElementById('toggle-password').addEventListener('click', function() {
         var passwordInput = document.getElementById('password');
         var eyeIcon = document.getElementById('toggle-password').querySelector('i');
