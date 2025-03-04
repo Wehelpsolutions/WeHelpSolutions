@@ -159,7 +159,7 @@ button.login-btn:hover {
 
 /* Search Bar */
 /* Search bar container */
-#search-container {
+#search-container, .search-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -169,7 +169,7 @@ button.login-btn:hover {
 }
 
 /* Input field */
-#search-input {
+#search-input, #searchInput {
     width: 100%;
     max-width: 300px;
     padding: 10px;
@@ -180,12 +180,12 @@ button.login-btn:hover {
     transition: border-color 0.3s ease;
 }
 
-#search-input:focus {
+#search-input:focus, #searchInput:focus {
     border-color: #007bff;
 }
 
 /* Search button */
-#search-btn {
+#search-btn, #searchButton {
     padding: 10px 15px;
     font-size: 16px;
     background-color: #007bff;
@@ -196,7 +196,7 @@ button.login-btn:hover {
     transition: background-color 0.3s ease;
 }
 
-#search-btn:hover {
+#search-btn:hover, #searchButton:hover {
     background-color: #0056b3;
 }
 
