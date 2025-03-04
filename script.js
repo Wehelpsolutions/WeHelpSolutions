@@ -81,28 +81,6 @@ if (window.location.pathname.endsWith("WeHelpSolutions/")) {
 
 }
 
-// Show Password
-
-// Check if the current page is either index.html or register.html
-if (window.location.pathname.endsWith("WeHelpSolutions/")) {
-    document.getElementById('toggle-password').addEventListener('click', function() {
-        var passwordInput = document.getElementById('password');
-        var eyeIcon = document.getElementById('toggle-password').querySelector('i');
-
-        // Toggle password visibility
-        if (passwordInput.type === "password") {
-            passwordInput.type = "text";
-            eyeIcon.classList.remove('fa-eye');
-            eyeIcon.classList.add('fa-eye-slash');  // Open eye when visible
-        } else {
-            passwordInput.type = "password";
-            eyeIcon.classList.remove('fa-eye-slash');
-            eyeIcon.classList.add('fa-eye');  // Closed eye when hidden
-        }
-    });
-}
-
-
 
 //Add work
 
