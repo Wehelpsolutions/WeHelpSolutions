@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
 
@@ -53,8 +53,6 @@ if (window.location.pathname.endsWith("WeHelpSolutions/")) {
 
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
-                        console.log("User data:", userData);
-
                         // Redirect based on user role
                         if (userData.role === "admin") {
                             window.location.href = "dashboard.html";
@@ -75,11 +73,29 @@ if (window.location.pathname.endsWith("WeHelpSolutions/")) {
             console.error("Login button not found!");
         }
     });
-
-    
-    
-
 }
+
+// Show Password
+
+// Check if the current page is either index.html or register.html
+if (document.location.pathname === "WeHelpSolutions/" || document.location.pathname === "/register.html") {
+    document.getElementById('toggle-password').addEventListener('click', function() {
+        var passwordInput = document.getElementById('password');
+        var eyeIcon = document.getElementById('toggle-password').querySelector('i');
+
+        // Toggle password visibility
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');  // Open eye when visible
+        } else {
+            passwordInput.type = "password";
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');  // Closed eye when hidden
+        }
+    });
+}
+
 
 
 //Add work
@@ -107,7 +123,6 @@ async function addWorkToFirestore(workData) {
             status: "pending" // Add the status field
         });
 
-        console.log("Work added successfully!");
         alert("Work added successfully!");
         closePopup();
     } catch (error) {
@@ -204,6 +219,7 @@ if (window.location.pathname.includes("pendingwork.html")) {
             querySnapshot.forEach((docSnapshot) => {
                 const work = docSnapshot.data();
                 const workId = docSnapshot.id;
+                let formattedDate = work.date ? new Date(work.date).toLocaleDateString("en-GB") : "N/A";
 
                 const workCard = document.createElement("section");
                 workCard.classList.add("card");
@@ -211,7 +227,7 @@ if (window.location.pathname.includes("pendingwork.html")) {
                 workCard.innerHTML = `
                     <h2>Work ${work.workNum} - ${work.workName} ${work.place || "N/A"}</h2>
                     <p>Details: ${work.details || "No details available"}</p>
-                    <p>Date: ${work.date || "N/A"}</p>
+                    <p>Date: ${formattedDate}</p>
                     <p>Estimate: ₹${work.estimate || "0.00"}</p>
 
                     <div class="card-actions">
@@ -253,7 +269,6 @@ if (window.location.pathname.includes("pendingwork.html")) {
                             // Remove the card from the DOM
                             workCard.remove();
 
-                            console.log("Work deleted from Firestore and DOM.");
                         } catch (error) {
                             console.error("Error deleting work:", error);
                             alert("Failed to delete the work. Please try again.");
@@ -442,7 +457,6 @@ async function addDayDetailsToFirestore(workId, dayData) {
 
         await addDoc(detailsCollection, newDayData);
 
-        console.log("Day details added successfully!");
         closeDayPopup(); // Close the popup
         location.reload(); // Reload the page to reflect changes
     } catch (error) {
@@ -547,7 +561,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Add the day data to Firestore
                 await addDayDetailsToFirestore(workId, dayData);
         
-                console.log("Day details added successfully!");
                 addDayForm.reset(); // Reset the form
             } catch (error) {
                 console.error("Error submitting day details:", error);
@@ -576,12 +589,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Sum the new salary with the current balance
                 const newBalance = currentBalance + salaryAmount;
         
-                console.log(`Updating ${person}'s balance: Current = ₹${currentBalance}, Adding = ₹${salaryAmount}, New = ₹${newBalance}`);
-        
                 // Update or create the document with the new balance using setDoc with merge option
                 await setDoc(salaryDocRef, { balance: newBalance }, { merge: true });
         
-                console.log(`Successfully updated ${person}'s balance to ₹${newBalance}`);
             } catch (error) {
                 console.error(`Error updating balance for ${person}:`, error);
                 alert(`Failed to update balance for ${person}. Please try again.`);
@@ -623,7 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
+//Day Card Loading
 
 async function loadDayCards(workId) {
     const detailsCollectionRef = collection(db, `jobs/${workId}/details`);
@@ -643,7 +653,9 @@ async function loadDayCards(workId) {
             dayCard.classList.add('card'); // Add your existing .card CSS class here
 
             // Convert Firestore Timestamp to human-readable date
-            let cardContent = `<h2>Day ${data.dayNumber || dayId} - ${data.Date}</h2>`;
+            let formattedDate = data.Date ? new Date(data.Date).toLocaleDateString("en-GB") : "N/A";
+
+            let cardContent = `<h2>Day ${data.dayNumber || dayId} - ${formattedDate}</h2>`;
 
             // Initialize the sum variable
             let totalAmount = 0;
@@ -1142,7 +1154,7 @@ if (window.location.pathname.includes("workcompleted.html")) {
                 workCard.innerHTML = `
                     <h2>Work ${work.workNum} - ${work.workName} ${work.place || "N/A"}</h2>
                     <p>Details: ${work.details || "No details available"}</p>
-                    <p>Date: ${work.date || "N/A"}</p>
+                    <p>Date: ${work.date ? new Date(work.date).toLocaleDateString("en-GB") : "N/A"}</p>
                     <p>Estimate: ₹${work.estimate || "0.00"}</p>
                     <p>Cash Paid: ₹${work.cashPaid || "0.00"}</p>
                     <p>Total Amount: ₹<span class="total-amount">Calculating...</span></p>
@@ -1680,7 +1692,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${name}</td>
+                <td><a href="employeeDetails.html?name=${encodeURIComponent(name)}" class="employee-link">${name}</a></td>
                 <td>₹ ${totalSalary.toFixed(2)}</td>
                 <td>₹ ${balance.toFixed(2)}</td>
                 <td><button class="pay-btn" data-name="${name}" data-balance="${balance}">Pay</button></td>
@@ -1833,5 +1845,111 @@ document.addEventListener("DOMContentLoaded", async () => {
   
     // Fetch and display transaction history when the page loads
     await fetchAndDisplayTransactionHistory();
-  });
+});
   
+
+// Employee Details
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ Run this script only if we are on employeeDetails.html
+    if (!window.location.pathname.endsWith("employeeDetails.html")) {
+        return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const employeeName = urlParams.get("name");
+
+    if (!employeeName) {
+        alert("Employee name not found.");
+        return;
+    }
+
+    document.getElementById("employee-name").textContent = employeeName;
+
+    try {
+        const jobsCollection = collection(db, "jobs");
+        const jobsQuery = query(jobsCollection, orderBy("date", "desc"));
+        const jobSnapshot = await getDocs(jobsQuery);
+
+        let lastEntries = [];
+
+
+        // Loop through jobs and check inside `details` subcollection
+        for (const jobDoc of jobSnapshot.docs) {
+            const jobData = jobDoc.data();
+            const jobId = jobDoc.id;
+
+
+            // Reference the details subcollection for this job
+            const detailsCollectionRef = collection(db, `jobs/${jobId}/details`);
+            const detailsSnapshot = await getDocs(detailsCollectionRef);
+
+            for (const dayDoc of detailsSnapshot.docs) {
+                const dayData = dayDoc.data();
+                
+                const salary = dayData[employeeName] || 0; // ✅ Get salary or default to 0
+                if (salary > 0) { // ✅ Ignore if salary is 0
+                    let formattedDate = "N/A";
+                    if (dayData.Date) {
+                        const dateObj = new Date(dayData.Date);
+                        formattedDate = dateObj.toLocaleDateString("en-GB"); // ✅ Converts to DD/MM/YYYY
+                    }
+
+                    lastEntries.push({
+                        location: jobData.place || "N/A",
+                        date: formattedDate, // ✅ Display proper formatted date
+                        salary: salary
+                    });
+
+                    // Stop after collecting 30 valid job entries (days)
+                    if (lastEntries.length === 30) break;
+                }
+            }
+
+            if (lastEntries.length === 30) break; // Stop fetching after 30 valid entries
+        }
+
+        // **Sort the list to make the latest work appear at the top**
+        lastEntries.sort((a, b) => {
+            return new Date(b.date.split("/").reverse().join("-")) - new Date(a.date.split("/").reverse().join("-"));
+        });
+
+        // Select the table body element
+        const tableBody = document.getElementById("job-history-body");
+        tableBody.innerHTML = ""; // Clear previous content
+
+        if (lastEntries.length === 0) {
+            console.log("No recent jobs found for", employeeName);
+            tableBody.innerHTML = `<tr><td colspan="3">No recent jobs found.</td></tr>`;
+        } else {
+            lastEntries.forEach(entry => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${entry.location}</td>
+                    <td>${entry.date}</td>
+                    <td>₹${entry.salary}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching employee details:", error);
+        alert("Failed to load employee details.");
+    }
+});
+
+
+
+//Search Work Details
+
+document.getElementById("searchButton").addEventListener("click", function () {
+    const searchValue = document.getElementById("searchInput").value.trim();
+
+    if (searchValue !== "") {
+        // Encode to ensure special characters (like spaces) are URL-safe
+        const encodedName = encodeURIComponent(searchValue);
+        window.location.href = `employeeDetails.html?name=${encodedName}`;
+    } else {
+        alert("Please enter an employee name!");
+    }
+});
