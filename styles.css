@@ -1026,7 +1026,8 @@ button.login-btn:hover {
 
 /* Style for Pay button */
 .pay-btn ,
-.history-btn {
+.history-btn ,
+.details-btn {
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
@@ -1062,7 +1063,7 @@ td {
     width: 100%;
     border-collapse: collapse;
     margin: 0 auto;
-  }
+    }
   
   #transaction-history-table th,
   #transaction-history-table td {
@@ -1074,6 +1075,17 @@ td {
   #transaction-history-table th {
     background-color: #f4f4f4;
   }
+
+
+  @media (max-width: 768px) { 
+    .pay-btn,
+    .history-btn,
+    .details-btn {
+        margin-bottom: 10px; /* Adds space between buttons in vertical stacking */
+        margin-right: 0; /* Removes right margin to keep buttons aligned */
+        width: 100%; /* Optional: Makes buttons full width for better touch accessibility */
+    }
+}
 
 /* Responsive styles */
 @media (max-width: 600px) {
@@ -1088,12 +1100,6 @@ td {
     .card-actions > .delete-day-btn, 
     .card-actions > .delete-btn {
         width: 100%; /* Full-width buttons on smaller screens */
-        font-size: 16px;
-        padding: 12px 20px;
-    }
-
-    .pay-btn {
-        width: 100%; /* Full-width Pay button on smaller screens */
         font-size: 16px;
         padding: 12px 20px;
     }
