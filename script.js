@@ -84,7 +84,7 @@ if (window.location.pathname.endsWith("WeHelpSolutions/")) {
 // Show Password
 
 // Check if the current page is either index.html or register.html
-if (document.location.pathname === "WeHelpSolutions/" || document.location.pathname === "/register.html") {
+if (window.location.pathname.endsWith("WeHelpSolutions/")) {
     document.getElementById('toggle-password').addEventListener('click', function() {
         var passwordInput = document.getElementById('password');
         var eyeIcon = document.getElementById('toggle-password').querySelector('i');
