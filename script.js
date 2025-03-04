@@ -1506,10 +1506,17 @@ async function fetchAndDisplayTools() {
             return;
         }
 
+        const toolsArray = [];
+
         toolsSnapshot.forEach((docSnapshot) => {
             const tool = docSnapshot.data();
-            const toolId = docSnapshot.id;
+            toolsArray.push({ ...tool, id: docSnapshot.id });
+        });
 
+        // Sort tools by purchaseDate (latest first)
+        toolsArray.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+
+        toolsArray.forEach((tool) => {
             // Create tool card
             const toolItem = document.createElement("div");
             toolItem.classList.add("tool-item");
@@ -1518,18 +1525,17 @@ async function fetchAndDisplayTools() {
             <div>
                 <h3>${tool.name}</h3>
                 <p>Type: ${tool.type}</p>
-                <p>Purchased: ${tool.purchaseDate}</p>
+                <p>Purchased: ${tool.purchaseDate ? new Date(tool.purchaseDate).toLocaleDateString("en-GB") : "N/A"}</p>
                 <p>Description: ${tool.description}</p>
             </div>
             <div>
                 <p>₹${tool.cost.toFixed(2)}</p>
-                <button class="delete-btn" data-id="${toolId}">Delete</button>
+                <button class="delete-btn" data-id="${tool.id}">Delete</button>
             </div>
             `;
 
-
             // Attach delete functionality
-            toolItem.querySelector(".delete-btn").addEventListener("click", () => deleteTool(toolId));
+            toolItem.querySelector(".delete-btn").addEventListener("click", () => deleteTool(tool.id));
             toolListContainer.appendChild(toolItem);
         });
     } catch (error) {
@@ -1537,6 +1543,7 @@ async function fetchAndDisplayTools() {
         toolListContainer.innerHTML = "<p>Failed to load tools. Please try again later.</p>";
     }
 }
+
 
 // Delete a tool
 async function deleteTool(toolId) {
@@ -1683,27 +1690,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function fetchAndDisplaySalaries() {
         tableBody.innerHTML = "";
         const salarySnapshot = await getDocs(salaryCollection);
-
-        salarySnapshot.forEach(async (doc) => {
+    
+        salarySnapshot.forEach((doc) => {
             const name = doc.id;
             const data = doc.data();
             const balance = data.balance || 0;
-            const totalSalary = await calculateTotalSalary(name);
-
+    
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td><a href="employeeDetails.html?name=${encodeURIComponent(name)}" class="employee-link">${name}</a></td>
-                <td>₹ ${totalSalary.toFixed(2)}</td>
-                <td>₹ ${balance.toFixed(2)}</td>
-                <td><button class="pay-btn" data-name="${name}" data-balance="${balance}">Pay</button></td>
+                <td>${name}</td>
+                <td><span class="salary-value" data-name="${name}" style="cursor: pointer; color: blue; text-decoration: underline;">Click to Load</span></td>
+                <td>₹ ${Math.round(balance)}</td>
+                <td>
+                    <button class="pay-btn" data-name="${name}" data-balance="${balance}">Pay</button>
+                    <button class="details-btn" onclick="window.location.href='employeeDetails.html?name=${encodeURIComponent(name)}'">Details</button>
+                </td>
             `;
             tableBody.appendChild(row);
+        });
+    
+        // Add event listener to the salary span for loading salary on click
+        document.querySelectorAll(".salary-value").forEach(span => {
+            span.addEventListener("click", async (event) => {
+                const name = event.target.getAttribute("data-name");
 
-            document.querySelectorAll(".pay-btn").forEach(button => {
-                button.addEventListener("click", handlePayButton);
-            });            
+                event.target.textContent = "Loading..."; // Show loading state
+                const totalSalary = await calculateTotalSalary(name);
+                event.target.textContent = `₹ ${totalSalary.toFixed(2)}`; // Update with calculated salary
+            });
+        });
+    
+        document.querySelectorAll(".pay-btn").forEach(button => {
+            button.addEventListener("click", handlePayButton);
         });
     }
+    
+
+
+
+    document.addEventListener("click", async (event) => {
+        if (event.target.classList.contains("show-salary-btn")) {
+            const name = event.target.getAttribute("data-name");
+            const salaryCell = document.getElementById(`salary-${name}`);
+    
+            if (!name || !salaryCell) return;
+    
+            // Fetch and calculate the salary
+            salaryCell.innerText = "Loading..."; // Show loading indicator
+            const totalSalary = await calculateTotalSalary(name);
+            salaryCell.innerText = `₹ ${totalSalary.toFixed(2)}`;
+        }
+    });
+
+
+
 
     // Function: Handle Pay button click
     async function handlePayButton(event) {
@@ -1942,14 +1982,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 //Search Work Details
 
-document.getElementById("searchButton").addEventListener("click", function () {
-    const searchValue = document.getElementById("searchInput").value.trim();
+document.addEventListener("DOMContentLoaded", function () {
+    // Check if the current page is employeeDetails.html
+    if (window.location.pathname.includes("employeeDetails.html")) {
+        document.getElementById("searchButton").addEventListener("click", function () {
+            const searchValue = document.getElementById("searchInput").value.trim();
 
-    if (searchValue !== "") {
-        // Encode to ensure special characters (like spaces) are URL-safe
-        const encodedName = encodeURIComponent(searchValue);
-        window.location.href = `employeeDetails.html?name=${encodedName}`;
-    } else {
-        alert("Please enter an employee name!");
+            if (searchValue !== "") {
+                // Encode to ensure special characters (like spaces) are URL-safe
+                const encodedName = encodeURIComponent(searchValue);
+                window.location.href = `employeeDetails.html?name=${encodedName}`;
+            } else {
+                alert("Please enter an employee name!");
+            }
+        });
     }
 });
