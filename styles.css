@@ -159,7 +159,7 @@ button.login-btn:hover {
 
 /* Search Bar */
 /* Search bar container */
-#search-container, .search-container {
+#search-container, .search-container, #total-pending-expense {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -686,15 +686,211 @@ button.login-btn:hover {
     background-color: #b71c1c;
 }
 
-#expenses {
+#expenses ,
+#other-expenses {
     cursor: pointer; /* Show pointer cursor */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-#expenses:hover {
+#expenses:hover ,
+#other-expenses:hover {
     transform: scale(1.02); /* Slightly enlarge the card on hover */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow effect */
 }
+
+
+/* General Container */
+.expenses-container {
+    max-width: 750px;
+    margin: auto;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Headings */
+.expenses-title {
+    text-align: center;
+    color: #0056b3;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.expenses-form-title,
+.expenses-list-title {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+/* Form Styling */
+.expenses-form-section {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.expense-input {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.expense-submit-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 8px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.expense-submit-btn:hover {
+    background-color: #003d80;
+}
+
+/* Table Styling */
+.expenses-list-section {
+    margin-top: 15px;
+}
+
+/* Make Table Compact */
+.expenses-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 14px; /* Smaller text for compact look */
+}
+
+/* Table Head & Body Styling */
+.expenses-table th, 
+.expenses-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal; /* Prevents overflow */
+    line-height: 1.2; /* Reduce row height */
+}
+
+/* Reduce Header Size */
+.expenses-table th {
+    background-color: #0056b3;
+    color: white;
+    font-size: 13px;
+    padding: 6px;
+}
+
+/* Alternate row color */
+.expenses-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* 🔹 Responsive Design for Mobile */
+@media screen and (max-width: 768px) {
+    .expenses-container {
+        padding: 10px;
+        max-width: 100%;
+    }
+
+    .expenses-table {
+        font-size: 12px; /* Reduce font size */
+    }
+
+    .expenses-table th, 
+    .expenses-table td {
+        padding: 5px; /* Reduce padding */
+    }
+
+    /* ✅ Keep Headers but Reduce Font Size */
+    .expenses-table th {
+        font-size: 11px;
+        padding: 5px;
+    }
+
+    /* ✅ Ensure Content Fits in 3 Lines */
+    .expenses-table td {
+        font-size: 12px;
+        text-align: left;
+        padding: 4px;
+        line-height: 1.1; /* Reduce line height for compact look */
+    }
+
+    /* ✅ Ensure No Horizontal Scroll */
+    .expenses-table {
+        table-layout: auto; /* Let table adjust naturally */
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+
+/* Add New Expense Button */
+.expense-toggle-btn {
+    width: 100%;
+    max-width: 200px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    background-color: #0056b3;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    display: block;
+    margin: 10px auto; /* Center align */
+}
+
+/* Hover Effect */
+.expense-toggle-btn:hover {
+    background-color: #003d80;
+    transform: scale(1.05);
+}
+
+/* Active/Clicked Effect */
+.expense-toggle-btn:active {
+    background-color: #002b5e;
+    transform: scale(0.98);
+}
+
+/* Responsive Styling */
+@media screen and (max-width: 768px) {
+    .expense-toggle-btn {
+        width: 90%; /* Full width on small screens */
+        max-width: 100%;
+        font-size: 13px;
+        padding: 8px;
+    }
+}
+
+
+
+
+
+/* Delete Button */
+.expense-delete-btn {
+    padding: 5px 10px;
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.expense-delete-btn:hover {
+    background-color: #a62828;
+}
+
 
 
 /* Salary */
