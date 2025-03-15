@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
 
@@ -197,9 +197,32 @@ if (window.location.pathname.includes("dashboard.html")) {
 // Pending Work
 
 
+
+
 // Ensure the script only runs on pendingwork.html
 if (window.location.pathname.includes("pendingwork.html")) {
     // Function to fetch and display works with status = "pending"
+    async function getTotalExpense(workId) {
+        const detailsCollectionRef = collection(db, `jobs/${workId}/details`);
+        const querySnapshot = await getDocs(detailsCollectionRef);
+    
+        let totalExpense = 0;
+    
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            for (let key in data) {
+                if (!["dayNumber", "Date"].includes(key)) {
+                    const value = parseFloat(data[key]);
+                    if (!isNaN(value)) {
+                        totalExpense += value;
+                    }
+                }
+            }
+        });
+    
+        return totalExpense;
+    }
+    
     async function fetchAndDisplayWorks() {
         try {
             const worksCollection = collection(db, "jobs");
@@ -210,90 +233,107 @@ if (window.location.pathname.includes("pendingwork.html")) {
             );
             const querySnapshot = await getDocs(pendingWorksQuery);
             const workList = document.getElementById("work-list");
-
-
+            const totalExpenseDisplay = document.getElementById("total-pending-expense"); // Create this element in HTML
+    
             // Clear any existing content
             workList.innerHTML = "";
-
+    
+            let totalPendingExpense = 0; // Initialize total pending expense
+    
+            if (querySnapshot.empty) {
+                workList.innerHTML = `<p>No pending works found.</p>`;
+                totalExpenseDisplay.innerHTML = "Total Pending Expense: ₹0.00"; // Show 0 if no pending works
+                return;
+            }
+    
             // Iterate through Firestore documents with status = "pending"
-            querySnapshot.forEach((docSnapshot) => {
+            for (const docSnapshot of querySnapshot.docs) {
                 const work = docSnapshot.data();
                 const workId = docSnapshot.id;
                 let formattedDate = work.date ? new Date(work.date).toLocaleDateString("en-GB") : "N/A";
-
+    
+                // Fetch total expense for this work
+                const totalExpense = await getTotalExpense(workId);
+                totalPendingExpense += totalExpense; // Add to total pending expense sum
+    
                 const workCard = document.createElement("section");
                 workCard.classList.add("card");
-
+    
                 workCard.innerHTML = `
                     <h2>Work ${work.workNum} - ${work.workName} ${work.place || "N/A"}</h2>
                     <p>Details: ${work.details || "No details available"}</p>
                     <p>Date: ${formattedDate}</p>
                     <p>Estimate: ₹${work.estimate || "0.00"}</p>
-
+                    <p>Total Expense: ₹${totalExpense.toFixed(2)}</p>
+    
                     <div class="card-actions">
                         <button class="edit-btn">Edit</button>
                         <button class="delete-btn">Delete</button>
                     </div>
                 `;
-
+    
                 // Select the buttons and add event listeners
                 const editButton = workCard.querySelector(".edit-btn");
                 const deleteButton = workCard.querySelector(".delete-btn");
-
+    
                 // Edit button functionality
                 editButton.addEventListener("click", (event) => {
                     event.stopPropagation(); // Prevent the card click event
                     openEditPopup(workId, work); // Open edit popup with the work data
                 });
-
+    
                 // Delete button functionality
                 deleteButton.addEventListener("click", async (event) => {
                     event.stopPropagation(); // Prevent the card click event from firing
-
+    
                     const confirmed = window.confirm("Are you sure you want to delete this work?");
                     if (confirmed) {
                         try {
                             const workDocRef = doc(db, "jobs", workId);
                             const detailsCollectionRef = collection(db, `jobs/${workId}/details`);
-
+    
                             // Fetch all documents in the subcollection
                             const detailsSnapshot = await getDocs(detailsCollectionRef);
-
+    
                             // Delete all documents in the subcollection
                             const deletePromises = detailsSnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
                             await Promise.all(deletePromises);
-
+    
                             // Delete the document from Firestore
                             await deleteDoc(workDocRef);
-
+    
                             // Remove the card from the DOM
                             workCard.remove();
-
+    
+                            // Recalculate and update total expense
+                            fetchAndDisplayWorks();
+    
                         } catch (error) {
                             console.error("Error deleting work:", error);
                             alert("Failed to delete the work. Please try again.");
                         }
                     }
                 });
-
+    
                 // Redirect to details page on card click
                 workCard.addEventListener("click", () => {
                     window.location.href = `workDetails.html?id=${workId}`;
                 });
-
+    
                 // Append the work card to the list
                 workList.appendChild(workCard);
-            });
-
-            // Handle case when no pending works are found
-            if (querySnapshot.empty) {
-                workList.innerHTML = `<p>No pending works found.</p>`;
             }
+    
+            // Display the total pending work expenses
+            totalExpenseDisplay.innerHTML = `Total Expense: ₹${totalPendingExpense.toFixed(2)}`;
+    
         } catch (error) {
             console.error("Error fetching works: ", error);
             workList.innerHTML = `<p>Failed to load works. Please try again later.</p>`;
         }
     }
+    
+    
 
     // Function to open the edit popup
     function openEditPopup(workId, workData) {
@@ -1010,10 +1050,11 @@ async function calculateExpensesAndDisplayCashPaid() {
     const labourChargeElement = document.getElementById("labour-charge");
     const otherExpenseElement = document.getElementById("other-expense");
     const totalCashPaidElement = document.getElementById("total-cash-paid");
+    const otherExpensesElement = document.getElementById("othr-expense");
     const netProfitElement = document.getElementById("net-profit");
 
     // Check if all required elements exist
-    if (!labourChargeElement || !otherExpenseElement || !totalCashPaidElement || !netProfitElement) {
+    if (!labourChargeElement || !otherExpenseElement || !totalCashPaidElement || !otherExpensesElement || !netProfitElement) {
         console.error("One or more required elements are missing from the DOM!");
         return;
     }
@@ -1064,8 +1105,11 @@ async function calculateExpensesAndDisplayCashPaid() {
         });
     }
 
+    // Use the existing displayed "Other Expenses" amount
+    const totalOtherExpensesFromDB = parseFloat(otherExpensesElement.textContent.replace("₹", "").trim()) || 0;
+
     // Calculate Net Profit including Tool Expenses
-    const netProfit = totalCashPaid - (totalLabourCharge + totalOtherExpenses + totalToolsCost);
+    const netProfit = totalCashPaid - (totalLabourCharge + totalOtherExpenses + totalToolsCost + totalOtherExpensesFromDB);
 
     // Update the UI
     labourChargeElement.textContent = `₹ ${totalLabourCharge.toFixed(2)}`;
@@ -1128,11 +1172,44 @@ if (window.location.pathname.includes("workcompleted.html")) {
         return subtotal;
     }
 
+
+
+    async function calculateTotalProfit() {
+        let totalProfit = 0;
+        try {
+            const worksCollection = collection(db, "jobs");
+            const completedWorksQuery = query(worksCollection, where("status", "==", "completed"));
+            const querySnapshot = await getDocs(completedWorksQuery);
+    
+            for (const docSnapshot of querySnapshot.docs) {
+                const work = docSnapshot.data();
+                const workId = docSnapshot.id;
+    
+                let totalExpense = await calculateWorkSubtotal(workId); // Fetch expenses
+                let cashPaid = work.cashPaid || 0;
+                let profit = cashPaid - totalExpense; // Calculate profit for this work
+    
+                totalProfit += profit; // Accumulate total profit
+            }
+    
+            // Update the Profit display in the header
+            const profitDisplay = document.querySelector("header h4");
+            if (profitDisplay) {
+                profitDisplay.innerHTML = `Profit: <span style="color: ${totalProfit >= 0 ? 'lightgreen' : 'red'};">₹ ${totalProfit.toFixed(2)}</span>`;
+            }
+    
+        } catch (error) {
+            console.error("Error calculating total profit:", error);
+        }
+    }
+    
+
+
     // Function to fetch and display works with status = "completed"
     async function fetchAndDisplayCompletedWorks() {
         try {
             const worksCollection = collection(db, "jobs");
-            const completedWorksQuery = query(worksCollection, where("status", "==", "completed"), orderBy("workNum", "asc"));
+            const completedWorksQuery = query(worksCollection, where("status", "==", "completed"), orderBy("workNum", "desc"));
             const querySnapshot = await getDocs(completedWorksQuery);
             const mainDashboard = document.querySelector("main.dashboard");
 
@@ -1212,6 +1289,9 @@ if (window.location.pathname.includes("workcompleted.html")) {
             if (querySnapshot.empty) {
                 mainDashboard.innerHTML = `<p>No completed works found.</p>`;
             }
+
+            await calculateTotalProfit();
+
         } catch (error) {
             console.error("Error fetching completed works: ", error);
             mainDashboard.innerHTML = `<p>Failed to load works. Please try again later.</p>`;
@@ -1666,6 +1746,216 @@ async function getTotalToolsCost() {
 }
 
 
+
+
+// Other Expenses
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ Run this script only if we are on otherexpenses.html
+    if (!window.location.pathname.endsWith("otherexpenses.html")) {
+        return;
+    }
+
+    const expenseFormContainer = document.getElementById("other-expense-form-container");
+    const expenseForm = document.getElementById("other-expense-form");
+    const addExpenseBtn = document.getElementById("show-expense-form-btn");
+    const expenseTableBody = document.getElementById("other-expense-table-body");
+
+    // Hide form initially
+    expenseFormContainer.style.display = "none";
+
+    // Toggle form visibility when button is clicked
+    addExpenseBtn.addEventListener("click", () => {
+        if (expenseFormContainer.style.display === "none") {
+            expenseFormContainer.style.display = "block";
+            addExpenseBtn.textContent = "Hide Expense Form";
+        } else {
+            expenseFormContainer.style.display = "none";
+            addExpenseBtn.textContent = "Add New Expense";
+        }
+    });
+
+    // Fetch and display expenses from Firestore
+    async function fetchAndDisplayExpenses() {
+        expenseTableBody.innerHTML = "<tr><td colspan='7'>Loading expenses...</td></tr>";
+
+        try {
+            const expensesSnapshot = await getDocs(collection(db, "expenses"));
+            expenseTableBody.innerHTML = ""; // Clear table
+
+            if (expensesSnapshot.empty) {
+                expenseTableBody.innerHTML = "<tr><td colspan='7'>No expenses found.</td></tr>";
+                return;
+            }
+
+            let expenses = [];
+
+            // Loop through expenses and store in an array for sorting
+            expensesSnapshot.forEach(docSnapshot => {
+                const expense = docSnapshot.data();
+                let formattedDate = "N/A";
+
+                if (expense.date) {
+                    const dateObj = new Date(expense.date);
+                    const day = dateObj.getDate().toString().padStart(2, "0");
+                    const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+                    const year = dateObj.getFullYear();
+                    formattedDate = `${day}/${month}/${year}`;
+                }
+
+                expenses.push({
+                    id: docSnapshot.id,
+                    materialName: expense.materialName,
+                    materialAmount: expense.materialAmount,
+                    cargoFees: expense.cargoFees,
+                    transport: expense.transport,
+                    date: expense.date || "N/A",
+                    formattedDate, // Store formatted date for display
+                    total: (expense.materialAmount + expense.cargoFees + expense.transport).toFixed(2)
+                });
+            });
+
+            // **Sort by date (Latest first)**
+            expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Render the expenses
+            expenses.forEach(expense => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${expense.formattedDate}</td> <!-- Show formatted date -->
+                    <td>${expense.materialName}</td>
+                    <td>₹${expense.materialAmount.toFixed(2)}</td>
+                    <td>₹${expense.cargoFees.toFixed(2)}</td>
+                    <td>₹${expense.transport.toFixed(2)}</td>
+                    <td><strong>₹${expense.total}</strong></td>
+                    <td><button class="expense-delete-btn" data-id="${expense.id}">Delete</button></td>
+                `;
+
+                // Attach delete event
+                row.querySelector(".expense-delete-btn").addEventListener("click", async () => {
+                    await deleteDoc(doc(db, "expenses", expense.id));
+                    fetchAndDisplayExpenses();
+                });
+
+                expenseTableBody.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error("Error fetching expenses:", error);
+        }
+    }
+
+    // Add new expense to Firestore
+    expenseForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const rawDate = document.getElementById("expense-date").value;
+        const formattedDate = new Date(rawDate).toISOString().split("T")[0]; // Store in YYYY-MM-DD
+
+        const newExpense = {
+            date: formattedDate, // ✅ Store in Firestore as YYYY-MM-DD
+            materialName: document.getElementById("expense-material").value.trim(),
+            materialAmount: parseFloat(document.getElementById("expense-material-amount").value),
+            cargoFees: parseFloat(document.getElementById("expense-cargo-fees").value),
+            transport: parseFloat(document.getElementById("expense-transport").value)
+        };
+
+        await addDoc(collection(db, "expenses"), newExpense);
+        expenseForm.reset();
+        fetchAndDisplayExpenses();
+    });
+
+    // Load expenses on page load
+    fetchAndDisplayExpenses();
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ Run this script only if we are on the dashboard
+    if (!window.location.pathname.endsWith("dashboard.html")) {
+        return;
+    }
+
+    document.getElementById("other-expenses").addEventListener("click", () => {
+        window.location.href = "otherexpenses.html"; // Redirect to the page
+    });
+
+    const totalExpensesElement = document.getElementById("total-expenses");
+
+    // Fetch and calculate total other expenses
+    async function fetchTotalExpenses() {
+        try {
+            const expensesSnapshot = await getDocs(collection(db, "expenses"));
+            let totalAmount = 0;
+
+            expensesSnapshot.forEach(docSnapshot => {
+                const expense = docSnapshot.data();
+                totalAmount += (expense.materialAmount || 0) + (expense.cargoFees || 0) + (expense.transport || 0);
+            });
+
+            // ✅ Update the UI with the total amount
+            totalExpensesElement.textContent = `₹ ${totalAmount.toFixed(2)}`;
+        } catch (error) {
+            console.error("Error fetching total expenses:", error);
+        }
+    }
+
+    // Load total expenses when the dashboard loads
+    fetchTotalExpenses();
+
+    // ✅ Select elements in the Dashboard
+    const overviewOtherExpensesElement = document.getElementById("othr-expense"); // Overview
+
+    // ✅ Function to fetch and update total other expenses
+    async function fetchTotalExpenses() {
+        try {
+            const expensesSnapshot = await getDocs(collection(db, "expenses"));
+            let totalAmount = 0;
+
+            expensesSnapshot.forEach(docSnapshot => {
+                const expense = docSnapshot.data();
+                totalAmount += (expense.materialAmount || 0) + (expense.cargoFees || 0) + (expense.transport || 0);
+            });
+
+            // ✅ Update UI (Both Card and Overview)
+            if (totalExpensesElement) totalExpensesElement.textContent = `₹ ${totalAmount.toFixed(2)}`;
+            if (overviewOtherExpensesElement) overviewOtherExpensesElement.textContent = `₹ ${totalAmount.toFixed(2)}`;
+        } catch (error) {
+            console.error("Error fetching total expenses:", error);
+        }
+    }
+
+    // ✅ Fetch and display total expenses
+    fetchTotalExpenses();
+
+    // ✅ Listen for real-time changes in Firestore and update the UI dynamically
+    onSnapshot(collection(db, "expenses"), (snapshot) => {
+        let totalAmount = 0;
+
+        snapshot.forEach(doc => {
+            const expense = doc.data();
+            totalAmount += (expense.materialAmount || 0) + (expense.cargoFees || 0) + (expense.transport || 0);
+        });
+
+        // ✅ Update UI (Both Card and Overview)
+        if (totalExpensesElement) totalExpensesElement.textContent = `₹ ${totalAmount.toFixed(2)}`;
+        if (overviewOtherExpensesElement) overviewOtherExpensesElement.textContent = `₹ ${totalAmount.toFixed(2)}`;
+    });
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
 //Salary
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1761,18 +2051,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        if (payAmount > currentBalance) {
-            alert("Payment amount exceeds current balance.");
-            return;
-        }
+        // ✅ Remove balance limit check (Allow negative balance)
+        const newBalance = currentBalance - payAmount;
 
         try {
             const salaryDocRef = doc(db, "salary", name);
             await updateDoc(salaryDocRef, {
-                balance: currentBalance - payAmount
+                balance: newBalance // ✅ Now balance can be negative
             });
 
-            alert(`Successfully paid ₹${payAmount} to ${name}. Updated balance: ₹${(currentBalance - payAmount).toFixed(2)}`);
+            alert(`Successfully paid ₹${payAmount} to ${name}. Updated balance: ₹${newBalance.toFixed(2)}`);
 
             // Store the transaction details in a new collection for transaction history
             const transactionCollection = collection(db, "transactionHistory");
@@ -1790,6 +2078,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             alert("Failed to update balance. Please try again.");
         }
     }
+
 
     async function calculateTotalSalary(name) {
         const jobsCollection = collection(db, "jobs");
@@ -1965,8 +2254,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             lastEntries.forEach(entry => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${entry.location}</td>
                     <td>${entry.date}</td>
+                    <td>${entry.location}</td>
                     <td>₹${entry.salary}</td>
                 `;
                 tableBody.appendChild(row);
