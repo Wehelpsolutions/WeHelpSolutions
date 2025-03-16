@@ -2287,3 +2287,138 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
+
+
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    // ✅ Run only in dashboard.html
+    if (!window.location.pathname.endsWith("dashboard.html")) return;
+
+    const searchInput = document.getElementById("search-input");
+    const searchBtn = document.getElementById("search-btn");
+    const resultsSection = document.getElementById("search-results");
+    const resultsList = document.getElementById("results-list");
+
+    searchBtn.addEventListener("click", async () => {
+        const queryText = searchInput.value.trim().toLowerCase();
+        if (queryText === "") return;
+
+        resultsList.innerHTML = "<p>Searching...</p>";
+        resultsSection.style.display = "block";
+
+        try {
+            // Fetch results from all three collections
+            const [jobsResults, toolsResults, expensesResults] = await Promise.all([
+                searchJobs(queryText),
+                searchTools(queryText),
+                searchExpenses(queryText)
+            ]);
+
+            // Combine all results
+            const allResults = [...jobsResults, ...toolsResults, ...expensesResults];
+
+            resultsList.innerHTML = ""; // Clear old results
+            if (allResults.length === 0) {
+                resultsList.innerHTML = "<p>No matching results found.</p>";
+            } else {
+                allResults.forEach(result => {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `<strong>${result.title}</strong>: ${result.details}`;
+                    resultsList.appendChild(listItem);
+                });
+            }
+        } catch (error) {
+            console.error("Error searching:", error);
+            resultsList.innerHTML = "<p>Error fetching search results.</p>";
+        }
+    });
+
+    // ✅ Function to format dates as DD/MM/YYYY
+    function formatDate(isoDate) {
+        if (!isoDate) return "N/A";
+        const dateObj = new Date(isoDate);
+        if (isNaN(dateObj.getTime())) return "N/A"; // Handle invalid dates
+        return dateObj.toLocaleDateString("en-GB"); // Converts to DD/MM/YYYY
+    }
+
+    async function searchJobs(queryText) {
+        const jobsCollection = collection(db, "jobs");
+        const snapshot = await getDocs(jobsCollection);
+        let results = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const lowerQuery = queryText.toLowerCase();
+            const formattedDate = formatDate(data.date);
+
+            if (
+                (formattedDate.toLowerCase().includes(lowerQuery)) || 
+                (data.workName && data.workName.toLowerCase().includes(lowerQuery)) || 
+                (data.workNum && data.workNum.toString().includes(lowerQuery)) || 
+                (data.cashPaid && data.cashPaid.toString().includes(lowerQuery)) || 
+                (data.place && data.place.toLowerCase().includes(lowerQuery))
+            ) {
+                results.push({
+                    title: `W${data.workNum}, ${data.workName}`,
+                    details: `${data.place}, Date: ${formattedDate}`
+                });
+            }
+        });
+
+        return results;
+    }
+
+    async function searchTools(queryText) {
+        const toolsCollection = collection(db, "tools");
+        const snapshot = await getDocs(toolsCollection);
+        let results = [];
+    
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const lowerQuery = queryText.toLowerCase();
+            const formattedDate = formatDate(data.purchaseDate);
+    
+            if (
+                (data.name && data.name.toLowerCase().includes(lowerQuery)) || 
+                (formattedDate.toLowerCase().includes(lowerQuery)) ||
+                (data.cost && data.cost.toString().includes(lowerQuery))
+            ) {
+                results.push({
+                    title: `🛠️ ${data.name}`,
+                    details: `Date: ${formattedDate}, Cost: ₹${data.cost || "N/A"}`
+                });
+            }
+        });
+    
+        return results;
+    }
+    
+
+    async function searchExpenses(queryText) {
+        const expensesCollection = collection(db, "expenses");
+        const snapshot = await getDocs(expensesCollection);
+        let results = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const formattedDate = formatDate(data.date);
+
+            if (
+                (data.materialName && data.materialName.toLowerCase().includes(queryText)) || 
+                (formattedDate.toLowerCase().includes(queryText))
+            ) {
+                results.push({
+                    title: `${data.materialName || "Unknown"}`,
+                    details: `Date: ${formattedDate}, Amount: ₹${data.materialAmount || 0}`
+                });
+            }
+        });
+
+        return results;
+    }
+});
