@@ -12,9 +12,17 @@
     <header class="header">
         <img src="logo.png" alt="Logo" class="logo-img">
         <h1 class="logo">We Help Solutions</h1>
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Search by Date, Work Name, or Place">
+            <button id="search-btn">Search</button>
+        </div>
     </header>
 
     <main class="dashboard">
+        <section id="search-results" class="card" style="display: none;">
+            <h2>Search Results</h2>
+            <ul id="results-list"></ul>
+        </section>
         <section id="overview" class="card">
             <h2>Overview</h2>
             <p>Work Completed: <span id="work-completed">0</span></p>
