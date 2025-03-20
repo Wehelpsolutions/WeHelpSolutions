@@ -2051,33 +2051,124 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        // ✅ Remove balance limit check (Allow negative balance)
-        const newBalance = currentBalance - payAmount;
+        // ✅ Create overlay
+        const overlay = document.createElement("div");
+        overlay.id = "overlay";
+        document.body.appendChild(overlay);
+        overlay.style.display = "block";
 
-        try {
-            const salaryDocRef = doc(db, "salary", name);
-            await updateDoc(salaryDocRef, {
-                balance: newBalance // ✅ Now balance can be negative
-            });
+        // ✅ Create popup container
+        const popup = document.createElement("div");
+        popup.id = "payment-popup";
+        popup.innerHTML = `<p>Select payment date and time:</p>`;
 
-            alert(`Successfully paid ₹${payAmount} to ${name}. Updated balance: ₹${newBalance.toFixed(2)}`);
+        // ✅ Date input
+        const dateInput = document.createElement("input");
+        dateInput.type = "date";
 
-            // Store the transaction details in a new collection for transaction history
-            const transactionCollection = collection(db, "transactionHistory");
-            await addDoc(transactionCollection, {
-                name: name,
-                payAmount: payAmount,
-                transactionDate: new Date()  // Storing the current timestamp
-            });
+        // ✅ Time input (dropdown for hours, minutes & AM/PM)
+        const timeContainer = document.createElement("div");
+        timeContainer.id = "time-container";
 
-            // Refresh table data after payment
-            await fetchAndDisplaySalaries();
-
-        } catch (error) {
-            console.error("Error updating balance:", error);
-            alert("Failed to update balance. Please try again.");
+        // Hour dropdown (1-12)
+        const hourInput = document.createElement("select");
+        for (let i = 1; i <= 12; i++) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.textContent = i;
+            hourInput.appendChild(option);
         }
-    }
+
+        // Minute dropdown (00-59)
+        const minuteInput = document.createElement("select");
+        for (let i = 0; i < 60; i += 5) { // Step 5 minutes
+            let option = document.createElement("option");
+            option.value = i.toString().padStart(2, "0");
+            option.textContent = i.toString().padStart(2, "0");
+            minuteInput.appendChild(option);
+        }
+
+        // AM/PM dropdown
+        const ampmInput = document.createElement("select");
+        ["AM", "PM"].forEach(ampm => {
+            let option = document.createElement("option");
+            option.value = ampm;
+            option.textContent = ampm;
+            ampmInput.appendChild(option);
+        });
+
+        // Add elements to the time container
+        timeContainer.appendChild(hourInput);
+        timeContainer.appendChild(document.createTextNode(":"));
+        timeContainer.appendChild(minuteInput);
+        timeContainer.appendChild(ampmInput);
+
+        // ✅ Confirm Button
+        const confirmButton = document.createElement("button");
+        confirmButton.id = "confirm-payment";
+        confirmButton.textContent = "Confirm";
+
+        confirmButton.onclick = async () => {
+            const selectedDate = dateInput.value;
+            const selectedHour = hourInput.value;
+            const selectedMinute = minuteInput.value;
+            const selectedAmPm = ampmInput.value;
+
+            if (!selectedDate) {
+                alert("Please select a date.");
+                return;
+            }
+
+            // Convert to 24-hour format for Firebase
+            let hour24 = parseInt(selectedHour);
+            if (selectedAmPm === "PM" && hour24 !== 12) {
+                hour24 += 12;
+            } else if (selectedAmPm === "AM" && hour24 === 12) {
+                hour24 = 0;
+            }
+
+            const paymentTimestamp = new Date(`${selectedDate}T${hour24}:${selectedMinute}`);
+
+            const newBalance = currentBalance - payAmount;
+
+            try {
+                const salaryDocRef = doc(db, "salary", name);
+                await updateDoc(salaryDocRef, {
+                    balance: newBalance // ✅ Now balance can be negative
+                });
+
+                alert(`Successfully paid ₹${payAmount} to ${name}. Updated balance: ₹${newBalance.toFixed(2)}`);
+
+                // Store transaction in Firebase
+                const transactionCollection = collection(db, "transactionHistory");
+                await addDoc(transactionCollection, {
+                    name: name,
+                    payAmount: payAmount,
+                    transactionDate: paymentTimestamp
+                });
+
+                // Remove popup and overlay after success
+                document.body.removeChild(popup);
+                document.body.removeChild(overlay);
+
+                // Refresh table data
+                await fetchAndDisplaySalaries();
+
+            } catch (error) {
+                console.error("Error updating balance:", error);
+                alert("Failed to update balance. Please try again.");
+            }
+        };
+
+        // ✅ Append elements to popup
+        popup.appendChild(dateInput);
+        popup.appendChild(timeContainer);
+        popup.appendChild(confirmButton);
+
+        // ✅ Add popup to document
+        document.body.appendChild(popup);
+    };
+
 
 
     async function calculateTotalSalary(name) {
