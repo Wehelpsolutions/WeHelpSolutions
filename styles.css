@@ -1223,7 +1223,8 @@ button.login-btn:hover {
 /* Style for Pay button */
 .pay-btn ,
 .history-btn ,
-.details-btn {
+.details-btn,
+#load-more-btn {
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
