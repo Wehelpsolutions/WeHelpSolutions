@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, setDoc, doc, query, where, addDoc, getDoc, updateDoc, deleteDoc, increment, orderBy, onSnapshot, limit, startAfter } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
 
@@ -1977,6 +1977,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Fetch and display salary details
     await fetchAndDisplaySalaries();
 
+
     async function fetchAndDisplaySalaries() {
         tableBody.innerHTML = "";
         const salarySnapshot = await getDocs(salaryCollection);
@@ -2060,48 +2061,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         // ✅ Create popup container
         const popup = document.createElement("div");
         popup.id = "payment-popup";
-        popup.innerHTML = `<p>Select payment date and time:</p>`;
+        popup.innerHTML = `<p>Select payment date:</p>`;
 
-        // ✅ Date input
+        // ✅ Date input only
         const dateInput = document.createElement("input");
         dateInput.type = "date";
-
-        // ✅ Time input (dropdown for hours, minutes & AM/PM)
-        const timeContainer = document.createElement("div");
-        timeContainer.id = "time-container";
-
-        // Hour dropdown (1-12)
-        const hourInput = document.createElement("select");
-        for (let i = 1; i <= 12; i++) {
-            let option = document.createElement("option");
-            option.value = i;
-            option.textContent = i;
-            hourInput.appendChild(option);
-        }
-
-        // Minute dropdown (00-59)
-        const minuteInput = document.createElement("select");
-        for (let i = 0; i < 60; i += 5) { // Step 5 minutes
-            let option = document.createElement("option");
-            option.value = i.toString().padStart(2, "0");
-            option.textContent = i.toString().padStart(2, "0");
-            minuteInput.appendChild(option);
-        }
-
-        // AM/PM dropdown
-        const ampmInput = document.createElement("select");
-        ["AM", "PM"].forEach(ampm => {
-            let option = document.createElement("option");
-            option.value = ampm;
-            option.textContent = ampm;
-            ampmInput.appendChild(option);
-        });
-
-        // Add elements to the time container
-        timeContainer.appendChild(hourInput);
-        timeContainer.appendChild(document.createTextNode(":"));
-        timeContainer.appendChild(minuteInput);
-        timeContainer.appendChild(ampmInput);
+        dateInput.required = true;
 
         // ✅ Confirm Button
         const confirmButton = document.createElement("button");
@@ -2110,24 +2075,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         confirmButton.onclick = async () => {
             const selectedDate = dateInput.value;
-            const selectedHour = hourInput.value;
-            const selectedMinute = minuteInput.value;
-            const selectedAmPm = ampmInput.value;
-
             if (!selectedDate) {
                 alert("Please select a date.");
                 return;
             }
 
-            // Convert to 24-hour format for Firebase
-            let hour24 = parseInt(selectedHour);
-            if (selectedAmPm === "PM" && hour24 !== 12) {
-                hour24 += 12;
-            } else if (selectedAmPm === "AM" && hour24 === 12) {
-                hour24 = 0;
-            }
-
-            const paymentTimestamp = new Date(`${selectedDate}T${hour24}:${selectedMinute}`);
+            // Use selected date with time defaulting to 00:00:00
+            const paymentTimestamp = new Date(`${selectedDate}T00:00:00`);
 
             const newBalance = currentBalance - payAmount;
 
@@ -2162,12 +2116,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // ✅ Append elements to popup
         popup.appendChild(dateInput);
-        popup.appendChild(timeContainer);
         popup.appendChild(confirmButton);
 
         // ✅ Add popup to document
         document.body.appendChild(popup);
-    };
+    }
+
 
 
 
@@ -2268,13 +2222,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
   
 
-// Employee Details
+
+
+//Employee Details Page
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // ✅ Run this script only if we are on employeeDetails.html
-    if (!window.location.pathname.endsWith("employeeDetails.html")) {
-        return;
-    }
+    if (!window.location.pathname.endsWith("employeeDetails.html")) return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const employeeName = urlParams.get("name");
@@ -2286,77 +2239,98 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("employee-name").textContent = employeeName;
 
-    try {
-        const jobsCollection = collection(db, "jobs");
-        const jobsQuery = query(jobsCollection, orderBy("date", "desc"));
-        const jobSnapshot = await getDocs(jobsQuery);
+    const tableBody = document.getElementById("job-history-body");
+    const loadMoreBtn = document.getElementById("load-more-btn");
+    let lastJobDoc = null;
+    const pageSize = 20;
+    let totalLoaded = 0;
+    let isFirstLoad = true;
 
-        let lastEntries = [];
-
-
-        // Loop through jobs and check inside `details` subcollection
-        for (const jobDoc of jobSnapshot.docs) {
-            const jobData = jobDoc.data();
-            const jobId = jobDoc.id;
-
-
-            // Reference the details subcollection for this job
-            const detailsCollectionRef = collection(db, `jobs/${jobId}/details`);
-            const detailsSnapshot = await getDocs(detailsCollectionRef);
-
-            for (const dayDoc of detailsSnapshot.docs) {
-                const dayData = dayDoc.data();
-                
-                const salary = dayData[employeeName] || 0; // ✅ Get salary or default to 0
-                if (salary > 0) { // ✅ Ignore if salary is 0
-                    let formattedDate = "N/A";
-                    if (dayData.Date) {
-                        const dateObj = new Date(dayData.Date);
-                        formattedDate = dateObj.toLocaleDateString("en-GB"); // ✅ Converts to DD/MM/YYYY
-                    }
-
-                    lastEntries.push({
-                        location: jobData.place || "N/A",
-                        date: formattedDate, // ✅ Display proper formatted date
-                        salary: salary
-                    });
-
-                    // Stop after collecting 30 valid job entries (days)
-                    if (lastEntries.length === 30) break;
-                }
+    async function loadEntries(limitCount) {
+        try {
+            let jobsQuery = query(collection(db, "jobs"), orderBy("date", "desc"), limit(limitCount));
+            if (lastJobDoc) {
+                jobsQuery = query(collection(db, "jobs"), orderBy("date", "desc"), startAfter(lastJobDoc), limit(limitCount));
             }
 
-            if (lastEntries.length === 30) break; // Stop fetching after 30 valid entries
+            const jobSnapshot = await getDocs(jobsQuery);
+            if (jobSnapshot.empty) {
+                loadMoreBtn.style.display = "none";
+                return;
+            }
+
+            const newEntries = [];
+
+            for (const jobDoc of jobSnapshot.docs) {
+                const jobData = jobDoc.data();
+                const jobId = jobDoc.id;
+
+                const detailsRef = collection(db, `jobs/${jobId}/details`);
+                const detailsSnap = await getDocs(detailsRef);
+
+                for (const dayDoc of detailsSnap.docs) {
+                    const dayData = dayDoc.data();
+                    const salary = dayData[employeeName] || 0;
+
+                    if (salary > 0) {
+                        let formattedDate = "N/A";
+                        if (dayData.Date) {
+                            const dateObj = new Date(dayData.Date);
+                            formattedDate = dateObj.toLocaleDateString("en-GB");
+                        }
+
+                        newEntries.push({
+                            location: jobData.place || "N/A",
+                            date: formattedDate,
+                            salary: salary
+                        });
+
+                        if (newEntries.length === pageSize) break;
+                    }
+                }
+
+                lastJobDoc = jobDoc;
+
+                if (newEntries.length === pageSize) break;
+            }
+
+            // Append to table
+            if (newEntries.length === 0 && isFirstLoad) {
+                tableBody.innerHTML = `<tr><td colspan="3">No recent jobs found.</td></tr>`;
+            } else {
+                newEntries.forEach(entry => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${entry.date}</td>
+                        <td>${entry.location}</td>
+                        <td>₹${entry.salary}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            totalLoaded += newEntries.length;
+            isFirstLoad = false;
+
+            if (newEntries.length < pageSize) {
+                loadMoreBtn.style.display = "none"; // No more data
+            }
+
+        } catch (err) {
+            console.error("Error fetching entries:", err);
+            alert("Error loading job data.");
         }
-
-        // **Sort the list to make the latest work appear at the top**
-        lastEntries.sort((a, b) => {
-            return new Date(b.date.split("/").reverse().join("-")) - new Date(a.date.split("/").reverse().join("-"));
-        });
-
-        // Select the table body element
-        const tableBody = document.getElementById("job-history-body");
-        tableBody.innerHTML = ""; // Clear previous content
-
-        if (lastEntries.length === 0) {
-            console.log("No recent jobs found for", employeeName);
-            tableBody.innerHTML = `<tr><td colspan="3">No recent jobs found.</td></tr>`;
-        } else {
-            lastEntries.forEach(entry => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.location}</td>
-                    <td>₹${entry.salary}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-    } catch (error) {
-        console.error("Error fetching employee details:", error);
-        alert("Failed to load employee details.");
     }
+
+    // First load (30 entries)
+    await loadEntries(20);
+
+    // On Load More click (fetch 20 each time)
+    loadMoreBtn.addEventListener("click", () => {
+        loadEntries(20);
+    });
 });
+
 
 
 
