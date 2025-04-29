@@ -15,6 +15,7 @@ const firebaseConfig = {
     measurementId: "G-WYTKKZL1E7"
 };
 
+
 // Initialize Firebase and Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -558,7 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Extract salary data
                 const Shahas = parseFloat(document.getElementById("Shahas").value) || 0;
                 const Rafi = parseFloat(document.getElementById("Rafi").value) || 0;
-                const Roni = parseFloat(document.getElementById("Roni").value) || 0;
+                // const Roni = parseFloat(document.getElementById("Roni").value) || 0;
                 const Ishaque = parseFloat(document.getElementById("Ishaque").value) || 0;
                 const Midlaj = parseFloat(document.getElementById("Midlaj").value) || 0;
         
@@ -579,7 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     Date,
                     Shahas,
                     Rafi,
-                    Roni,
+                    // Roni,
                     Ishaque,
                     Midlaj,
                     food,
@@ -588,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
         
                 // Update balances for relevant salary fields
-                const salaryData = { Shahas, Rafi, Roni, Ishaque, Midlaj };
+                const salaryData = { Shahas, Rafi, Ishaque, Midlaj };
                 const updatePromises = [];
                 for (let person in salaryData) {
                     const salaryAmount = salaryData[person];
