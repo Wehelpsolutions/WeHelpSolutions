@@ -15,7 +15,6 @@ const firebaseConfig = {
     measurementId: "G-WYTKKZL1E7"
 };
 
-
 // Initialize Firebase and Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -2080,21 +2079,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                 alert("Please select a date.");
                 return;
             }
-
-            // Use selected date with time defaulting to 00:00:00
+        
             const paymentTimestamp = new Date(`${selectedDate}T00:00:00`);
-
             const newBalance = currentBalance - payAmount;
-
+        
             try {
                 const salaryDocRef = doc(db, "salary", name);
+                const salarySnapshot = await getDoc(salaryDocRef);
+                if (!salarySnapshot.exists()) {
+                    alert("Employee record not found.");
+                    return;
+                }
+        
+                const data = salarySnapshot.data();
+                const email = data.email;
+        
+                // ✅ Update Firestore
                 await updateDoc(salaryDocRef, {
-                    balance: newBalance // ✅ Now balance can be negative
+                    balance: newBalance
                 });
-
-                alert(`Successfully paid ₹${payAmount} to ${name}. Updated balance: ₹${newBalance.toFixed(2)}`);
-
-                // Store transaction in Firebase
+        
+                // ✅ Store transaction in transactionHistory
                 const transactionCollection = collection(db, "transactionHistory");
                 await addDoc(transactionCollection, {
                     name: name,
@@ -2102,18 +2107,35 @@ document.addEventListener("DOMContentLoaded", async () => {
                     transactionDate: paymentTimestamp
                 });
 
-                // Remove popup and overlay after success
+                console.log("Sending to:", email);
+
+        
+                // ✅ Send Email via EmailJS
+                await window.emailjs.send("service_wehelpsolutions", "template_tmoujre", {
+                    name: name,
+                    payAmount: `₹${payAmount}`,
+                    balance: `₹${newBalance}`,
+                    to_email: email
+                });
+                
+        
+                // ✅ Success Message
+                alert(`Successfully paid ₹${payAmount} to ${name}.\nEmail sent to ${email}.\nUpdated balance: ₹${newBalance.toFixed(2)}`);
+        
+                // ✅ Remove popup and overlay
                 document.body.removeChild(popup);
                 document.body.removeChild(overlay);
-
-                // Refresh table data
+        
+                // ✅ Refresh salary table
                 await fetchAndDisplaySalaries();
-
+        
             } catch (error) {
-                console.error("Error updating balance:", error);
-                alert("Failed to update balance. Please try again.");
+                console.error("Error during payment process:", error);
+                alert("Something went wrong. Please try again.");
             }
         };
+        
+        
 
         // ✅ Append elements to popup
         popup.appendChild(dateInput);
