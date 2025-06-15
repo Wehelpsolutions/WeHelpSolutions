@@ -2271,9 +2271,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadEntries(limitCount) {
         try {
-            let jobsQuery = query(collection(db, "jobs"), orderBy("date", "desc"), limit(limitCount));
+            let jobsQuery = query(
+                collection(db, "jobs"),
+                orderBy("date", "desc"),
+                limit(limitCount)
+            );
             if (lastJobDoc) {
-                jobsQuery = query(collection(db, "jobs"), orderBy("date", "desc"), startAfter(lastJobDoc), limit(limitCount));
+                jobsQuery = query(
+                    collection(db, "jobs"),
+                    orderBy("date", "desc"),
+                    startAfter(lastJobDoc),
+                    limit(limitCount)
+                );
             }
 
             const jobSnapshot = await getDocs(jobsQuery);
@@ -2297,14 +2306,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     if (salary > 0) {
                         let formattedDate = "N/A";
+                        let sortDate = null;
+
                         if (dayData.Date) {
                             const dateObj = new Date(dayData.Date);
+                            sortDate = dateObj;
                             formattedDate = dateObj.toLocaleDateString("en-GB");
                         }
 
                         newEntries.push({
                             location: jobData.place || "N/A",
+                            workName: jobData.workName || "N/A",
                             date: formattedDate,
+                            sortDate: sortDate,
                             salary: salary
                         });
 
@@ -2317,15 +2331,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (newEntries.length === pageSize) break;
             }
 
-            // Append to table
             if (newEntries.length === 0 && isFirstLoad) {
                 tableBody.innerHTML = `<tr><td colspan="3">No recent jobs found.</td></tr>`;
             } else {
+                // Strictly sort by actual date descending
+                newEntries.sort((a, b) => {
+                    if (!a.sortDate || !b.sortDate) return 0;
+                    return b.sortDate - a.sortDate;
+                });
+
                 newEntries.forEach(entry => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${entry.date}</td>
-                        <td>${entry.location}</td>
+                        <td>${entry.workName} ${entry.location}</td>
                         <td>₹${entry.salary}</td>
                     `;
                     tableBody.appendChild(row);
@@ -2345,14 +2364,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // First load (30 entries)
+    // First load (20 entries)
     await loadEntries(20);
 
-    // On Load More click (fetch 20 each time)
+    // On Load More click
     loadMoreBtn.addEventListener("click", () => {
         loadEntries(20);
     });
 });
+
 
 
 
