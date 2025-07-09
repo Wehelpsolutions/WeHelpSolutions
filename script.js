@@ -2310,35 +2310,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         if (dayData.Date) {
                             const dateObj = new Date(dayData.Date);
-                            sortDate = dateObj;
-                            formattedDate = dateObj.toLocaleDateString("en-GB");
+                            sortDate = isNaN(dateObj) ? null : dateObj;
+                            formattedDate = sortDate 
+                                ? sortDate.toLocaleDateString("en-GB")
+                                : "Invalid Date";
                         }
 
                         newEntries.push({
                             location: jobData.place || "N/A",
                             workName: jobData.workName || "N/A",
                             date: formattedDate,
-                            sortDate: sortDate,
+                            sortDate: sortDate || new Date(0),
                             salary: salary
                         });
-
-                        if (newEntries.length === pageSize) break;
                     }
                 }
-
-                lastJobDoc = jobDoc;
-
-                if (newEntries.length === pageSize) break;
             }
+
+            lastJobDoc = jobSnapshot.docs.at(-1);
 
             if (newEntries.length === 0 && isFirstLoad) {
                 tableBody.innerHTML = `<tr><td colspan="3">No recent jobs found.</td></tr>`;
             } else {
-                // Strictly sort by actual date descending
-                newEntries.sort((a, b) => {
-                    if (!a.sortDate || !b.sortDate) return 0;
-                    return b.sortDate - a.sortDate;
-                });
+                newEntries.sort((a, b) => b.sortDate - a.sortDate);
 
                 newEntries.forEach(entry => {
                     const row = document.createElement("tr");
@@ -2355,7 +2349,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             isFirstLoad = false;
 
             if (newEntries.length < pageSize) {
-                loadMoreBtn.style.display = "none"; // No more data
+                loadMoreBtn.style.display = "none";
             }
 
         } catch (err) {
@@ -2364,14 +2358,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // First load (20 entries)
     await loadEntries(20);
 
-    // On Load More click
     loadMoreBtn.addEventListener("click", () => {
         loadEntries(20);
     });
 });
+
 
 
 
