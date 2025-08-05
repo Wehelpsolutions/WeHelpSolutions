@@ -1052,6 +1052,7 @@ async function calculateExpensesAndDisplayCashPaid() {
     const totalCashPaidElement = document.getElementById("total-cash-paid");
     const otherExpensesElement = document.getElementById("othr-expense");
     const netProfitElement = document.getElementById("net-profit");
+    const roomExpensesElement = document.getElementById("total-room-expenses");
 
     // Check if all required elements exist
     if (!labourChargeElement || !otherExpenseElement || !totalCashPaidElement || !otherExpensesElement || !netProfitElement) {
@@ -1108,8 +1109,13 @@ async function calculateExpensesAndDisplayCashPaid() {
     // Use the existing displayed "Other Expenses" amount
     const totalOtherExpensesFromDB = parseFloat(otherExpensesElement.textContent.replace("₹", "").trim()) || 0;
 
+    const totalRoomExpenses = parseFloat(
+        roomExpensesElement?.textContent.replace("₹", "").trim()
+    ) || 0;
+    
+
     // Calculate Net Profit including Tool Expenses
-    const netProfit = totalCashPaid - (totalLabourCharge + totalOtherExpenses + totalToolsCost + totalOtherExpensesFromDB);
+    const netProfit = totalCashPaid - (totalLabourCharge + totalOtherExpenses + totalToolsCost + totalOtherExpensesFromDB + totalRoomExpenses);
 
     // Update the UI
     labourChargeElement.textContent = `₹ ${totalLabourCharge.toFixed(2)}`;
@@ -1944,6 +1950,181 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!window.location.pathname.endsWith("roomexpenses.html")) return;
+
+    const formContainer = document.getElementById("room-expense-form-container");
+    const form = document.getElementById("room-expense-form");
+    const showFormBtn = document.getElementById("show-room-form-btn");
+    const tableBody = document.getElementById("room-expense-table-body");
+
+    // Hide form initially
+    formContainer.style.display = "none";
+
+    // Toggle form visibility
+    showFormBtn.addEventListener("click", () => {
+        if (formContainer.style.display === "none") {
+            formContainer.style.display = "block";
+            showFormBtn.textContent = "Hide Room Expense Form";
+        } else {
+            formContainer.style.display = "none";
+            showFormBtn.textContent = "Add Room Expense";
+        }
+    });
+
+    // Fetch and display room expenses
+    async function fetchAndDisplayRoomExpenses() {
+        tableBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+
+        try {
+            const snapshot = await getDocs(collection(db, "roomexpenses"));
+            tableBody.innerHTML = "";
+
+            if (snapshot.empty) {
+                tableBody.innerHTML = "<tr><td colspan='4'>No room expenses found.</td></tr>";
+                return;
+            }
+
+            let expenses = [];
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                let formattedDate = "N/A";
+                if (data.date) {
+                    const d = new Date(data.date);
+                    const day = d.getDate().toString().padStart(2, "0");
+                    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+                    const year = d.getFullYear();
+                    formattedDate = `${day}/${month}/${year}`;
+                }
+
+                expenses.push({
+                    id: docSnap.id,
+                    date: data.date,
+                    item: data.item,
+                    amount: data.amount,
+                    formattedDate
+                });
+            });
+
+            // Sort by latest date
+            expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            expenses.forEach(exp => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${exp.formattedDate}</td>
+                    <td>${exp.item}</td>
+                    <td>₹${parseFloat(exp.amount).toFixed(2)}</td>
+                    <td><button class="room-expense-delete-btn" data-id="${exp.id}">Delete</button></td>
+                `;
+
+                row.querySelector(".room-expense-delete-btn").addEventListener("click", async () => {
+                    await deleteDoc(doc(db, "roomexpenses", exp.id));
+                    fetchAndDisplayRoomExpenses();
+                });
+
+                tableBody.appendChild(row);
+            });
+
+        } catch (err) {
+            console.error("Error loading room expenses:", err);
+        }
+    }
+
+    // Submit form
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const rawDate = document.getElementById("room-expense-date").value;
+        const formattedDate = new Date(rawDate).toISOString().split("T")[0];
+
+        const newEntry = {
+            date: formattedDate,
+            item: document.getElementById("room-expense-purpose").value.trim(),
+            amount: parseFloat(document.getElementById("room-expense-amount").value)
+        };
+
+        await addDoc(collection(db, "roomexpenses"), newEntry);
+        form.reset();
+        fetchAndDisplayRoomExpenses();
+    });
+
+    fetchAndDisplayRoomExpenses();
+});
+
+
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ Only run on dashboard.html
+    if (!window.location.pathname.endsWith("dashboard.html")) {
+        return;
+    }
+
+    // ✅ Add click event to redirect to roomexpenses.html
+    const roomExpensesSection = document.getElementById("room-expenses");
+    if (roomExpensesSection) {
+        roomExpensesSection.addEventListener("click", () => {
+            window.location.href = "roomexpenses.html";
+        });
+    }
+
+    // ✅ Fetch and display room expenses in both places
+    const overviewSpan = document.getElementById("total-room-expenses");    // in overview
+    const cardSpan = document.getElementById("total-room-expenses-2");      // in card
+
+    async function fetchTotalRoomExpenses() {
+        try {
+            const snapshot = await getDocs(collection(db, "roomexpenses"));
+            let total = 0;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                total += Number(data.amount) || 0;
+            });
+
+            const formatted = `₹ ${total.toFixed(2)}`;
+
+            if (overviewSpan) overviewSpan.textContent = formatted;
+            if (cardSpan) cardSpan.textContent = formatted;
+
+        } catch (error) {
+            console.error("Error fetching room expenses:", error);
+        }
+    }
+
+    fetchTotalRoomExpenses();
+});
+
+
+
+
+
+
+
 
 
 
