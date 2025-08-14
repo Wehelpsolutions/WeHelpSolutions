@@ -24,7 +24,9 @@ const auth = getAuth(app);
 // Authentication functions
 //
 
-if (window.location.pathname.endsWith("WeHelpSolutions/")) {
+if (
+    window.location.pathname.endsWith("WeHelpSolutions/") ||
+    window.location.pathname.endsWith("index.html")) {
     document.addEventListener('DOMContentLoaded', () => {
         const loginButton = document.querySelector('.login-btn');
 
@@ -561,6 +563,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // const Roni = parseFloat(document.getElementById("Roni").value) || 0;
                 const Ishaque = parseFloat(document.getElementById("Ishaque").value) || 0;
                 const Midlaj = parseFloat(document.getElementById("Midlaj").value) || 0;
+                const Shammu = parseFloat(document.getElementById("Shammu").value) || 0;
         
                 // Extract additional fields
                 const food = parseFloat(document.getElementById("food").value) || 0;
@@ -582,13 +585,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Roni,
                     Ishaque,
                     Midlaj,
+                    Shammu,
                     food,
                     transport,
                     ...customFields, // Spread custom fields into the main object
                 };
         
                 // Update balances for relevant salary fields
-                const salaryData = { Shahas, Rafi, Ishaque, Midlaj };
+                const salaryData = { Shahas, Rafi, Ishaque, Midlaj, Shammu };
                 const updatePromises = [];
                 for (let person in salaryData) {
                     const salaryAmount = salaryData[person];
@@ -755,7 +759,7 @@ async function loadDayCards(workId) {
                             const dayData = docSnap.data(); // Fetch the day's data
 
                             // Update the balance for each member in the salary collection
-                            const members = ['Shahas', 'Roni', 'Rafi', 'Ishaque', 'Midlaj'];
+                            const members = ['Shahas', 'Roni', 'Rafi', 'Ishaque', 'Midlaj', 'Shammu'];
                             for (const member of members) {
                                 if (dayData[member]) {
                                     const amount = parseFloat(dayData[member]) || 0;
@@ -1093,10 +1097,11 @@ async function calculateExpensesAndDisplayCashPaid() {
             totalLabourCharge += (parseFloat(detailData.Roni) || 0);
             totalLabourCharge += (parseFloat(detailData.Ishaque) || 0);
             totalLabourCharge += (parseFloat(detailData.Midlaj) || 0);
+            totalLabourCharge += (parseFloat(detailData.Shammu) || 0);
 
             // Other expenses
             for (const key in detailData) {
-                if (!["Shahas", "Rafi", "Roni", "Ishaque", "Midlaj", "dayNumber", "Date"].includes(key)) {
+                if (!["Shahas", "Rafi", "Roni", "Ishaque", "Midlaj", "Shammu", "dayNumber", "Date"].includes(key)) {
                     const expense = parseFloat(detailData[key]);
                     if (!isNaN(expense)) {
                         totalOtherExpenses += expense;
