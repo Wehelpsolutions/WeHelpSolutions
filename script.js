@@ -6,13 +6,13 @@ import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/fir
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyD6d1BcIHhH1D_wR8nG1CCmjSpcRDpah-k",
-    authDomain: "we-help-solutions.firebaseapp.com",
-    projectId: "we-help-solutions",
-    storageBucket: "we-help-solutions.appspot.com",
-    messagingSenderId: "723331313502",
-    appId: "1:723331313502:web:4e72685e6bd9cc1c87e9cf",
-    measurementId: "G-WYTKKZL1E7"
+    apiKey: "AIzaSyCkINrXS7OfPosTvQWAoOugszwwU-JA5B0",
+    authDomain: "testing-f3aef.firebaseapp.com",
+    projectId: "testing-f3aef",
+    storageBucket: "testing-f3aef.firebasestorage.app",
+    messagingSenderId: "967947590241",
+    appId: "1:967947590241:web:95158fb7e28b91115b6820",
+    measurementId: "G-RRR17VXGHB"
 };
 
 // Initialize Firebase and Firestore
@@ -560,7 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Extract salary data
                 const Shahas = parseFloat(document.getElementById("Shahas").value) || 0;
                 const Rafi = parseFloat(document.getElementById("Rafi").value) || 0;
-                // const Roni = parseFloat(document.getElementById("Roni").value) || 0;
+                const Roni = parseFloat(document.getElementById("Roni").value) || 0;
                 const Ishaque = parseFloat(document.getElementById("Ishaque").value) || 0;
                 const Midlaj = parseFloat(document.getElementById("Midlaj").value) || 0;
                 const Shammu = parseFloat(document.getElementById("Shammu").value) || 0;
@@ -582,7 +582,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     Date,
                     Shahas,
                     Rafi,
-                    // Roni,
+                    Roni,
                     Ishaque,
                     Midlaj,
                     Shammu,
@@ -592,7 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
         
                 // Update balances for relevant salary fields
-                const salaryData = { Shahas, Rafi, Ishaque, Midlaj, Shammu };
+                const salaryData = { Shahas, Rafi, Roni, Ishaque, Midlaj, Shammu };
                 const updatePromises = [];
                 for (let person in salaryData) {
                     const salaryAmount = salaryData[person];
@@ -759,7 +759,7 @@ async function loadDayCards(workId) {
                             const dayData = docSnap.data(); // Fetch the day's data
 
                             // Update the balance for each member in the salary collection
-                            const members = ['Shahas', 'Roni', 'Rafi', 'Ishaque', 'Midlaj', 'Shammu'];
+                            const members = ['Shahas', 'Rafi', 'Roni', 'Ishaque', 'Midlaj', 'Shammu'];
                             for (const member of members) {
                                 if (dayData[member]) {
                                     const amount = parseFloat(dayData[member]) || 0;
