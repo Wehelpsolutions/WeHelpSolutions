@@ -2293,16 +2293,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                     transactionDate: paymentTimestamp
                 });
 
-                console.log("Sending to:", email);
+                // console.log("Sending to:", email);
 
         
-                // ✅ Send Email via EmailJS
-                await window.emailjs.send("service_wehelpsolutions", "template_tmoujre", {
-                    name: name,
-                    payAmount: `₹${payAmount}`,
-                    balance: `₹${newBalance}`,
-                    to_email: email
-                });
+                // // ✅ Send Email via EmailJS
+                // await window.emailjs.send("service_wehelpsolutions", "template_tmoujre", {
+                //     name: name,
+                //     payAmount: `₹${payAmount}`,
+                //     balance: `₹${newBalance}`,
+                //     to_email: email
+                // });
                 
         
                 // ✅ Success Message
@@ -2709,4 +2709,3 @@ document.addEventListener("DOMContentLoaded", () => {
         return results;
     }
 });
-
