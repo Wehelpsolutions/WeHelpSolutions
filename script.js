@@ -1551,13 +1551,11 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
 
             const toolName = document.getElementById("tool-name").value.trim();
-            const toolType = document.getElementById("tool-type").value;
             const purchaseDate = document.getElementById("purchase-date").value;
             const cost = document.getElementById("cost").value.trim();
-            const description = document.getElementById("description").value.trim();
 
             // Basic validation
-            if (!toolName || !toolType || !cost || isNaN(cost)) {
+            if (!toolName || !cost || isNaN(cost)) {
                 alert("Please fill the fields correctly.");
                 return;
             }
@@ -1566,10 +1564,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Add tool to Firestore
                 await addDoc(collection(db, "tools"), {
                     name: toolName,
-                    type: toolType,
                     purchaseDate,
                     cost: parseFloat(cost),
-                    description,
                 });
 
                 toolAddForm.reset(); // Reset the form
@@ -1615,9 +1611,7 @@ async function fetchAndDisplayTools() {
             toolItem.innerHTML = `
             <div>
                 <h3>${tool.name}</h3>
-                <p>Type: ${tool.type}</p>
                 <p>Purchased: ${tool.purchaseDate ? new Date(tool.purchaseDate).toLocaleDateString("en-GB") : "N/A"}</p>
-                <p>Description: ${tool.description}</p>
             </div>
             <div>
                 <p>₹${tool.cost.toFixed(2)}</p>
@@ -2293,16 +2287,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                     transactionDate: paymentTimestamp
                 });
 
-                // console.log("Sending to:", email);
+                console.log("Sending to:", email);
 
         
-                // // ✅ Send Email via EmailJS
-                // await window.emailjs.send("service_wehelpsolutions", "template_tmoujre", {
-                //     name: name,
-                //     payAmount: `₹${payAmount}`,
-                //     balance: `₹${newBalance}`,
-                //     to_email: email
-                // });
+                // ✅ Send Email via EmailJS
+                await window.emailjs.send("service_wehelpsolutions", "template_tmoujre", {
+                    name: name,
+                    payAmount: `₹${payAmount}`,
+                    balance: `₹${newBalance}`,
+                    to_email: email
+                });
                 
         
                 // ✅ Success Message
