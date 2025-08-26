@@ -6,13 +6,13 @@ import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/fir
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCkINrXS7OfPosTvQWAoOugszwwU-JA5B0",
-    authDomain: "testing-f3aef.firebaseapp.com",
-    projectId: "testing-f3aef",
-    storageBucket: "testing-f3aef.firebasestorage.app",
-    messagingSenderId: "967947590241",
-    appId: "1:967947590241:web:95158fb7e28b91115b6820",
-    measurementId: "G-RRR17VXGHB"
+    apiKey: "AIzaSyD6d1BcIHhH1D_wR8nG1CCmjSpcRDpah-k",
+    authDomain: "we-help-solutions.firebaseapp.com",
+    projectId: "we-help-solutions",
+    storageBucket: "we-help-solutions.appspot.com",
+    messagingSenderId: "723331313502",
+    appId: "1:723331313502:web:4e72685e6bd9cc1c87e9cf",
+    measurementId: "G-WYTKKZL1E7"
 };
 
 // Initialize Firebase and Firestore
@@ -2691,3 +2691,4 @@ document.addEventListener("DOMContentLoaded", () => {
         return results;
     }
 });
+
