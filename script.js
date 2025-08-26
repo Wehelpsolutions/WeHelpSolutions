@@ -6,13 +6,13 @@ import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/fir
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyD6d1BcIHhH1D_wR8nG1CCmjSpcRDpah-k",
-    authDomain: "we-help-solutions.firebaseapp.com",
-    projectId: "we-help-solutions",
-    storageBucket: "we-help-solutions.appspot.com",
-    messagingSenderId: "723331313502",
-    appId: "1:723331313502:web:4e72685e6bd9cc1c87e9cf",
-    measurementId: "G-WYTKKZL1E7"
+    apiKey: "AIzaSyCkINrXS7OfPosTvQWAoOugszwwU-JA5B0",
+    authDomain: "testing-f3aef.firebaseapp.com",
+    projectId: "testing-f3aef",
+    storageBucket: "testing-f3aef.firebasestorage.app",
+    messagingSenderId: "967947590241",
+    appId: "1:967947590241:web:95158fb7e28b91115b6820",
+    measurementId: "G-RRR17VXGHB"
 };
 
 // Initialize Firebase and Firestore
@@ -1675,49 +1675,37 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function calculateToolExpenses() {
-    const newToolsElement = document.getElementById("new-tools");
-    const serviceToolsElement = document.getElementById("service-tools");
     const totalToolsElement = document.getElementById("total-tools");
 
-    // Check if required elements exist
-    if (!newToolsElement || !serviceToolsElement || !totalToolsElement) {
-        console.error("One or more required elements are missing from the DOM!");
+    // Check if the required element exists
+    if (!totalToolsElement) {
+        console.error("The total-tools element is missing from the DOM!");
         return;
     }
 
     try {
         const toolsSnapshot = await getDocs(collection(db, "tools"));
 
-        let totalNewToolsCost = 0;
-        let totalServiceToolsCost = 0;
+        let totalToolsCost = 0;
 
         toolsSnapshot.forEach((doc) => {
             const tool = doc.data();
 
-            // Ensure valid data and add cost to respective category
-            if (tool.cost && tool.type) {
+            // Ensure valid data
+            if (tool.cost) {
                 const cost = parseFloat(tool.cost) || 0;
-
-                if (tool.type === "new") {
-                    totalNewToolsCost += cost;
-                } else if (tool.type === "service") {
-                    totalServiceToolsCost += cost;
-                }
+                totalToolsCost += cost;
             }
         });
 
-        // Calculate total cost
-        const totalToolsCost = totalNewToolsCost + totalServiceToolsCost;
-
         // Update UI
-        newToolsElement.textContent = `₹ ${totalNewToolsCost.toFixed(2)}`;
-        serviceToolsElement.textContent = `₹ ${totalServiceToolsCost.toFixed(2)}`;
         totalToolsElement.textContent = `₹ ${totalToolsCost.toFixed(2)}`;
     } catch (error) {
         console.error("Error fetching tools: ", error);
         alert("Failed to calculate tool expenses. Please try again.");
     }
 }
+
 
 
 document.addEventListener("DOMContentLoaded", async () => {
