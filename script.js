@@ -560,10 +560,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Extract salary data
                 const Shahas = parseFloat(document.getElementById("Shahas").value) || 0;
                 const Rafi = parseFloat(document.getElementById("Rafi").value) || 0;
-                const Roni = parseFloat(document.getElementById("Roni").value) || 0;
+                // const Roni = parseFloat(document.getElementById("Roni").value) || 0;
                 const Ishaque = parseFloat(document.getElementById("Ishaque").value) || 0;
                 const Midlaj = parseFloat(document.getElementById("Midlaj").value) || 0;
                 const Shammu = parseFloat(document.getElementById("Shammu").value) || 0;
+                const Sumon = parseFloat(document.getElementById("Sumon").value) || 0;
         
                 // Extract additional fields
                 const food = parseFloat(document.getElementById("food").value) || 0;
@@ -582,17 +583,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     Date,
                     Shahas,
                     Rafi,
-                    Roni,
+                    // Roni,
                     Ishaque,
                     Midlaj,
                     Shammu,
+                    Sumon,
                     food,
                     transport,
                     ...customFields, // Spread custom fields into the main object
                 };
         
                 // Update balances for relevant salary fields
-                const salaryData = { Shahas, Rafi, Roni, Ishaque, Midlaj, Shammu };
+                const salaryData = { Shahas, Rafi, Ishaque, Midlaj, Shammu, Sumon };
                 const updatePromises = [];
                 for (let person in salaryData) {
                     const salaryAmount = salaryData[person];
@@ -759,7 +761,7 @@ async function loadDayCards(workId) {
                             const dayData = docSnap.data(); // Fetch the day's data
 
                             // Update the balance for each member in the salary collection
-                            const members = ['Shahas', 'Rafi', 'Roni', 'Ishaque', 'Midlaj', 'Shammu'];
+                            const members = ['Shahas', 'Rafi', 'Ishaque', 'Midlaj', 'Shammu', 'Sumon'];
                             for (const member of members) {
                                 if (dayData[member]) {
                                     const amount = parseFloat(dayData[member]) || 0;
@@ -1094,14 +1096,15 @@ async function calculateExpensesAndDisplayCashPaid() {
             // Labour charges
             totalLabourCharge += (parseFloat(detailData.Shahas) || 0);
             totalLabourCharge += (parseFloat(detailData.Rafi) || 0);
-            totalLabourCharge += (parseFloat(detailData.Roni) || 0);
+            // totalLabourCharge += (parseFloat(detailData.Roni) || 0);
             totalLabourCharge += (parseFloat(detailData.Ishaque) || 0);
             totalLabourCharge += (parseFloat(detailData.Midlaj) || 0);
             totalLabourCharge += (parseFloat(detailData.Shammu) || 0);
+            totalLabourCharge += (parseFloat(detailData.Sumon) || 0);
 
             // Other expenses
             for (const key in detailData) {
-                if (!["Shahas", "Rafi", "Roni", "Ishaque", "Midlaj", "Shammu", "dayNumber", "Date"].includes(key)) {
+                if (!["Shahas", "Rafi", "Ishaque", "Midlaj", "Shammu", "Sumon", "dayNumber", "Date"].includes(key)) {
                     const expense = parseFloat(detailData[key]);
                     if (!isNaN(expense)) {
                         totalOtherExpenses += expense;
@@ -2691,4 +2694,3 @@ document.addEventListener("DOMContentLoaded", () => {
         return results;
     }
 });
-
